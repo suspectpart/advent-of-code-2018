@@ -7,19 +7,24 @@ from itertools import product
 
 class Fabric:
     def __init__(self):
-        self._claimed = defaultdict(int)
+        self._claimed = defaultdict(list)
 
     def claim(self, area):
-        self._claimed[area] += 1
+        self._claimed[area].append(claim)
+
+    def unique(self, claim_):
+        claims_ = [self._claimed[area] for area in claim_.areas()]
+        return all(len(c) == 1 and c[0] == claim_ for c in claims_)
 
     def conflicts(self):
-        return sum(map(lambda c: c > 1, self._claimed.values()))
+        return sum(map(lambda c: len(c) > 1, self._claimed.values()))
 
 
 class Claim:
-    pattern = re.compile('^#.*\s@\s(?P<x>\d+),(?P<y>\d+):\s(?P<w>\d+)x(?P<h>\d+)')
+    pattern = re.compile('^#(?P<number>\d+)\s@\s(?P<x>\d+),(?P<y>\d+):\s(?P<w>\d+)x(?P<h>\d+)')
 
-    def __init__(self, x, y, width, height):
+    def __init__(self, number, x, y, width, height):
+        self.number = number
         self.x_range = range(x, x + width)
         self.y_range = range(y, y + height)
 
@@ -37,6 +42,9 @@ class Claim:
         for area in self.areas():
             fabric_.claim(area)
 
+    def __repr__(self):
+        return f"#{self.number}"
+
 
 if __name__ == '__main__':
     """Advent of Code, Day 3, Part I"""
@@ -47,3 +55,8 @@ if __name__ == '__main__':
         claim(fabric)
 
     print(f"I) {fabric.conflicts()}")
+
+    for claim in claims:
+        if fabric.unique(claim):
+            print(f"II) {claim}")
+
