@@ -12,7 +12,7 @@ class Fabric:
     def claim(self, area):
         self._claimed[area].append(claim)
 
-    def unique(self, claim_):
+    def no_conflict(self, claim_):
         return all(len(self._claimed[area]) == 1 for area in claim_.areas())
 
     def conflicts(self):
@@ -34,9 +34,6 @@ class Claim:
     def areas(self):
         return product(self.x_range, self.y_range)
 
-    def id(self):
-        return set(self.areas())
-
     def __call__(self, fabric_):
         for area in self.areas():
             fabric_.claim(area)
@@ -46,7 +43,7 @@ class Claim:
 
 
 if __name__ == '__main__':
-    """Advent of Code, Day 3, Part I"""
+    """Advent of Code, Day 3, Part I + II"""
     claims = [Claim.from_string(line) for line in fileinput.input()]
     fabric = Fabric()
 
@@ -54,5 +51,4 @@ if __name__ == '__main__':
         claim(fabric)
 
     print(f"I) {fabric.conflicts()}")
-    print(f"II) {next(c for c in claims if fabric.unique(c))}")
-
+    print(f"II) {next(c for c in claims if fabric.no_conflict(c))}")
