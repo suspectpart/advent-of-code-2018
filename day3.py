@@ -13,8 +13,7 @@ class Fabric:
         self._claimed[area].append(claim)
 
     def unique(self, claim_):
-        claims_ = [self._claimed[area] for area in claim_.areas()]
-        return all(len(c) == 1 and c[0] == claim_ for c in claims_)
+        return all(len(self._claimed[area]) == 1 for area in claim_.areas())
 
     def conflicts(self):
         return sum(map(lambda c: len(c) > 1, self._claimed.values()))
@@ -55,8 +54,5 @@ if __name__ == '__main__':
         claim(fabric)
 
     print(f"I) {fabric.conflicts()}")
-
-    for claim in claims:
-        if fabric.unique(claim):
-            print(f"II) {claim}")
+    print(f"II) {next(c for c in claims if fabric.unique(c))}")
 
