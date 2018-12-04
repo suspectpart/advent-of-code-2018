@@ -11,29 +11,26 @@ class Guard(object):
         self._minutes = defaultdict(int)
         self._total = 0
 
-    def number(self):
-        return self._number
-
     def sleep(self, start, end):
         for minute in range(start, end):
             self._minutes[minute] += 1
 
         self._total += end - start
 
-    def slept(self):
-        return self._total
-
     def favorite_minute(self):
         return None if not self._minutes else max(self._minutes, key=self._minutes.get)
 
     def attack_vector(self):
-        return self.favorite_minute() * self.number()
+        return self.favorite_minute() * self._number
+
+    def minutes_slept(self):
+        return self._total
 
     def __lt__(self, other):
-        return self.slept() < other.slept()
+        return self.minutes_slept() < other.minutes_slept()
 
 
-class Action:
+class Record:
     stack = []
 
     def __init__(self, string):
@@ -41,15 +38,28 @@ class Action:
         self._minute = datetime.strptime(date, "%Y-%m-%d %H:%M").minute
         self._action = action
 
-    def execute(self, guards):
+    def replay(self, guards):
         if "#" in self._action:
             id_ = int(re.search("#(\d+)", self._action).group(1))
-            Action.stack = [guards.pick(id_)]
+            Record.stack = [guards.pick(id_)]
         elif "asleep" in self._action:
-            Action.stack.append(self._minute)
+            Record.stack.append(self._minute)
         else:
-            guard, start = Action.stack[0], Action.stack.pop()
+            guard, start = Record.stack[0], Record.stack.pop()
             guard.sleep(start, self._minute)
+
+
+class Log:
+    def __init__(self, records):
+        self._records = records
+
+    def replay(self, guards):
+        for record in self._records:
+            record.replay(guards)
+
+    @staticmethod
+    def from_file(path):
+        return Log([Record(line.strip()) for line in sorted(fileinput.input(path))])
 
 
 class Guards(dict):
@@ -61,10 +71,7 @@ class Guards(dict):
 
 
 if __name__ == '__main__':
-    actions = [Action(record.strip()) for record in sorted(fileinput.input("inputs/day4.txt"))]
     guards_ = Guards()
-
-    for action_ in actions:
-        action_.execute(guards_)
+    Log.from_file("inputs/day4.txt").replay(guards_)
 
     print(guards_.sleepiest().attack_vector())
