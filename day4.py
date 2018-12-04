@@ -33,24 +33,23 @@ class Guard(object):
         return self.slept() < other.slept()
 
 
-class Record:
-    pattern = re.compile('\[(.+)\]\s(.+)')
+class Action:
+    stack = []
 
     def __init__(self, string):
-        date, action = Record.pattern.match(string).groups()
-
-        self._date = datetime.strptime(date, "%Y-%m-%d %H:%M")
+        date, action = re.match('\[(.+)\]\s(.+)', string).groups()
+        self._minute = datetime.strptime(date, "%Y-%m-%d %H:%M").minute
         self._action = action
 
-    def action(self):
-        return self._action
-
-    def minute(self):
-        return self._date.minute
-
-    def begin_shift(self):
-        guard_num = re.search("#(\d+)", self.action())
-        return int(guard_num.group(1)) if guard_num else None
+    def execute(self, guards):
+        if "#" in self._action:
+            id_ = int(re.search("#(\d+)", self._action).group(1))
+            Action.stack = [guards.pick(id_)]
+        elif "asleep" in self._action:
+            Action.stack.append(self._minute)
+        else:
+            guard, start = Action.stack[0], Action.stack.pop()
+            guard.sleep(start, self._minute)
 
 
 class Guards(dict):
@@ -62,17 +61,10 @@ class Guards(dict):
 
 
 if __name__ == '__main__':
-    records = [Record(record.strip()) for record in sorted(fileinput.input("inputs/day4.txt"))]
-    guards = Guards()
-    current = None
-    start_ = 0
+    actions = [Action(record.strip()) for record in sorted(fileinput.input("inputs/day4.txt"))]
+    guards_ = Guards()
 
-    for record in records:
-        if "#" in record.action():
-            current = guards.pick(record.begin_shift())
-        elif "asleep" in record.action():
-            start_ = record.minute()
-        else:
-            current.sleep(start_, record.minute())
+    for action_ in actions:
+        action_.execute(guards_)
 
-    print(guards.sleepiest().attack_vector())
+    print(guards_.sleepiest().attack_vector())
