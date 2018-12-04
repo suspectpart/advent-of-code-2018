@@ -8,30 +8,23 @@ from datetime import datetime
 class Guard:
     def __init__(self, number):
         self._number = number
-        self._felt_asleep = None
         self._minutes = defaultdict(int)
         self._total = 0
 
     def number(self):
         return self._number
 
-    def sleep(self, time_):
-        self._felt_asleep = time_
-
-    def wake_up(self, time_):
-        for minute in range(self._felt_asleep, time_):
+    def sleep(self, start, end):
+        for minute in range(start, end):
             self._minutes[minute] += 1
 
-        self._total += time_ - self._felt_asleep
+        self._total += end - start
 
     def slept(self):
         return self._total
 
     def favorite_minute(self):
-        if not self._minutes:
-            return None
-
-        return max(self._minutes, key=self._minutes.get)
+        return None if not self._minutes else max(self._minutes, key=self._minutes.get)
 
     def attack_vector(self):
         return self.favorite_minute() * self.number()
@@ -65,15 +58,16 @@ if __name__ == '__main__':
 
     guards = {}
     current = None
+    start_ = 0
 
     for record in records:
         if record.begin_shift():
             who = record.begin_shift()
             current = guards.setdefault(who, Guard(who))
         elif "asleep" in record.action():
-            current.sleep(record.minute())
+            start_ = record.minute()
         else:
-            current.wake_up(record.minute())
+            current.sleep(start_, record.minute())
 
     sleeper = sorted(guards.values())[-1]
     print(sleeper.attack_vector())
