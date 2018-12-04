@@ -20,7 +20,7 @@ class Guard(object):
     def favorite_minute(self):
         return max(self._minutes, key=self._minutes.get) if self._minutes else 0
 
-    def highest_count(self):
+    def highest_frequency(self):
         return max(self._minutes.values()) if self._minutes else 0
 
     def minutes_slept(self):
@@ -76,7 +76,7 @@ class Statistics(dict):
         return sorted(self.values())[-1]
 
     def highest_frequency(self):
-        return sorted(self.values(), key=Guard.highest_count)[-1]
+        return sorted(self.values(), key=Guard.highest_frequency)[-1]
 
 
 if __name__ == '__main__':
