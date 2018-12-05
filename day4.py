@@ -11,6 +11,9 @@ class Guard(object):
         self._minutes = defaultdict(int)
         self._total = 0
 
+    def id(self):
+        return self.favorite_minute() * self._number
+
     def sleep(self, start, end):
         for minute in range(start, end):
             self._minutes[minute] += 1
@@ -26,20 +29,11 @@ class Guard(object):
     def minutes_slept(self):
         return self._total
 
-    def __lt__(self, other):
-        return self.minutes_slept() < other.minutes_slept()
 
-    def __repr__(self):
-        return f"{self.favorite_minute() * self._number}"
-
-
-class Log:
-    def __init__(self, records):
-        self._records = records
-
+class Log(list):
     def replay(self):
         statistics = Statistics()
-        for record in self._records:
+        for record in self:
             record.replay(statistics)
 
         return statistics
@@ -72,14 +66,14 @@ class Statistics(dict):
         return self.setdefault(number, Guard(number))
 
     def sleepiest(self):
-        return sorted(self.values())[-1]
+        return max(self.values(), key=Guard.minutes_slept)
 
     def highest_frequency(self):
-        return sorted(self.values(), key=Guard.highest_frequency)[-1]
+        return max(self.values(), key=Guard.highest_frequency)
 
 
 if __name__ == '__main__':
     stats = Log.from_file("inputs/day4.txt").replay()
 
-    print(stats.sleepiest())
-    print(stats.highest_frequency())
+    print(stats.sleepiest().id())
+    print(stats.highest_frequency().id())
