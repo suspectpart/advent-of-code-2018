@@ -33,25 +33,6 @@ class Guard(object):
         return f"{self.favorite_minute() * self._number}"
 
 
-class Record:
-    stack = []
-
-    def __init__(self, string):
-        date, action = re.match('\[(.+)\]\s(.+)', string).groups()
-        self._minute = datetime.strptime(date, "%Y-%m-%d %H:%M").minute
-        self._action = action
-
-    def replay(self, statistics):
-        if "#" in self._action:
-            id_ = int(re.search("#(\d+)", self._action).group(1))
-            Record.stack = [statistics.pick(id_)]
-        elif "asleep" in self._action:
-            Record.stack.append(self._minute)
-        else:
-            guard, start = Record.stack[0], Record.stack.pop()
-            guard.sleep(start, self._minute)
-
-
 class Log:
     def __init__(self, records):
         self._records = records
@@ -66,6 +47,24 @@ class Log:
     @staticmethod
     def from_file(path):
         return Log([Record(line.strip()) for line in sorted(fileinput.input(path))])
+
+
+class Record:
+    stack = []
+
+    def __init__(self, string):
+        (date, self._action) = re.match('\[(.+)\]\s(.+)', string).groups()
+        self._minute = datetime.strptime(date, "%Y-%m-%d %H:%M").minute
+
+    def replay(self, statistics):
+        if "#" in self._action:
+            guard_id = int(re.findall("#(\d+)", self._action)[0])
+            Record.stack = [statistics.pick(guard_id)]
+        elif "asleep" in self._action:
+            Record.stack.append(self._minute)
+        else:
+            guard, start = Record.stack[0], Record.stack.pop()
+            guard.sleep(start, self._minute)
 
 
 class Statistics(dict):
